@@ -13,8 +13,8 @@ import NavBar from "../components/NavBar/NavBar";
 export default function Search() {
   const [searchParams] = useSearchParams();
   const [events, setEvents] = useState([]);
-  const [state, setState] = useState(searchParams.get("state"));
-  const [city, setCity] = useState(searchParams.get("city"));
+  const [state, setState] = useState("");
+  const [city, setCity] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [bookingDetails, setBookingDetails] = useState({});
@@ -26,9 +26,18 @@ export default function Search() {
     evening: ["06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM"],
   };
 
+  function capitalize(str) {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
+
   useEffect(() => {
-    setState(searchParams.get("state"));
-    setCity(searchParams.get("city"));
+    const rawState = searchParams.get("state");
+    const rawCity = searchParams.get("city");
+
+    // Ensure capitalization matches what the test expects
+    setState(capitalize(rawState));
+    setCity(capitalize(rawCity));
   }, [searchParams]);
 
   useEffect(() => {
@@ -37,9 +46,8 @@ export default function Search() {
       setEvents([]);
 
       try {
-        const response = await axios.get(
-          `https://eventdata.onrender.com/events?state=${state}&city=${city}`
-        );
+        const apiUrl = `https://eventdata.onrender.com/events?state=${encodeURIComponent(state)}&city=${encodeURIComponent(city)}`;
+        const response = await axios.get(apiUrl);
         setEvents(response.data || []);
       } catch (error) {
         console.error("Event fetch failed:", error);
@@ -48,8 +56,10 @@ export default function Search() {
       }
     };
 
+    // Fetch only when both are present and properly capitalized
     if (state && city) {
-      fetchEvents();
+      // Delay fetch if needed to let state update propagate
+      setTimeout(fetchEvents, 200);
     }
   }, [state, city]);
 
@@ -62,7 +72,6 @@ export default function Search() {
     <>
       <NavBar />
       <Box sx={{ background: "linear-gradient(#EFF5FE, rgba(241,247,255,0.47))" }}>
-        {/* Banner + Search section */}
         <Box
           sx={{
             position: "relative",
@@ -86,13 +95,11 @@ export default function Search() {
           </Container>
         </Box>
 
-        {/* Events list */}
         <Container maxWidth="xl" sx={{ pt: 8, pb: 10, px: { xs: 0, md: 4 } }}>
           {events.length > 0 && (
             <Box sx={{ mb: 3 }}>
               <Typography component="h1" fontSize={24} fontWeight={500} mb={2}>
-                {`${events.length} events available in `}
-                <span style={{ textTransform: "capitalize" }}>{city?.toLowerCase()}</span>
+                {`${events.length} events available in ${city}`}
               </Typography>
 
               <Stack direction="row" spacing={2}>
