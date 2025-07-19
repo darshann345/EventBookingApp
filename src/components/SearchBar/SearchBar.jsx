@@ -30,7 +30,7 @@ export default function SearchBar({ list, filterList }) {
           fullWidth
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
-          inputProps={{ maxLength: 100 }} // Limiting input to 100 characters
+          inputProps={{ maxLength: 100 }}
         />
         <Button
           type="submit"
