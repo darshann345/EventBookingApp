@@ -119,8 +119,8 @@ export default function SearchHospital() {
 
       <Button
         type="submit"
+        id="searchBtn"
 
-        data-testid="searchBtn"
         variant="contained"
         size="large"
         startIcon={<SearchIcon />}
