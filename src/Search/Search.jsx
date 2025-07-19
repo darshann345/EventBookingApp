@@ -2,7 +2,7 @@ import { Container, Stack, Box, Typography } from "@mui/material";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import HospitalCard from "../components/EventCard/EventCard";
+import EventCard from "../components/EventCard/EventCard";
 import icon from "../assets/tick.png";
 import eventoffer2 from "../assets/eventoffer2.png";
 import SearchHospital from "../components/SearchEvents/SearchEvents";
@@ -111,7 +111,7 @@ export default function Search() {
               mr={{ md: "24px" }}
             >
               {events.map((event) => (
-                <HospitalCard
+                <EventCard
                   key={event.eventName}
                   details={event}
                   availableSlots={availableSlots}
