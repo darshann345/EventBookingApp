@@ -1,7 +1,6 @@
-// import mobile from "../../../assets/mobile.jpg";
 import eventDownload from "../../../assets/eventdownload.png"
 import playstore from "../../../assets/playstore.png";
-import apple from "../../../assets/apple-logo.png";
+import apple from "../../../assets/";
 import arrow from "../../../assets/down-arr.png";
 import { Box, Button, Container, Grid, Stack, Typography } from "@mui/material";
 import SmsForm from "./SmsForm";

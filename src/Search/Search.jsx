@@ -11,49 +11,48 @@ import AutohideSnackbar from "../components/AutohideSnackbar/AutohideSnackbar";
 import NavBar from "../components/NavBar/NavBar";
 
 export default function Search() {
-  const [seachParams, setSearchParams] = useSearchParams();
-  const [hospitals, setHospitals] = useState([]);
-  const [state, setState] = useState(seachParams.get("state"));
-  const [city, setCity] = useState(seachParams.get("city"));
+  const [searchParams] = useSearchParams();
+  const [events, setEvents] = useState([]);
+  const [state, setState] = useState(searchParams.get("state"));
+  const [city, setCity] = useState(searchParams.get("city"));
+  const [isLoading, setIsLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [bookingDetails, setBookingDetails] = useState({});
+  const [showBookingSuccess, setShowBookingSuccess] = useState(false);
+
   const availableSlots = {
     morning: ["11:30 AM"],
     afternoon: ["12:00 PM", "12:30 PM", "01:30 PM", "02:00 PM", "02:30 PM"],
     evening: ["06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM"],
   };
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [bookingDetails, setBookingDetails] = useState({});
-  const [showBookingSuccess, setShowBookingSuccess] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
-  //API to fetch hospitals based on state and city selection
   useEffect(() => {
-    const getHospitals = async () => {
-      setHospitals([]);
+    setState(searchParams.get("state"));
+    setCity(searchParams.get("city"));
+  }, [searchParams]);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
       setIsLoading(true);
+      setEvents([]);
+
       try {
-        const data = await axios.get(
+        const response = await axios.get(
           `https://eventdata.onrender.com/events?state=${state}&city=${city}`
         );
-
-        setHospitals(data.data);
-        setIsLoading(false);
-      } catch (err) {
-        console.log(err);
+        setEvents(response.data || []);
+      } catch (error) {
+        console.error("Event fetch failed:", error);
+      } finally {
         setIsLoading(false);
       }
     };
 
     if (state && city) {
-      getHospitals();
+      fetchEvents();
     }
   }, [state, city]);
 
-  useEffect(() => {
-    setState(seachParams.get("state"));
-    setCity(seachParams.get("city"));
-  }, [seachParams]);
-
-  // show booking modal
   const handleBookingModal = (details) => {
     setBookingDetails(details);
     setIsModalOpen(true);
@@ -62,13 +61,8 @@ export default function Search() {
   return (
     <>
       <NavBar />
-      <Box
-        sx={{
-          background: "linear-gradient(#EFF5FE, rgba(241,247,255,0.47))",
-          width: "100%",
-          pl: 0,
-        }}
-      >
+      <Box sx={{ background: "linear-gradient(#EFF5FE, rgba(241,247,255,0.47))" }}>
+        {/* Banner + Search section */}
         <Box
           sx={{
             position: "relative",
@@ -83,7 +77,7 @@ export default function Search() {
               background: "#fff",
               p: 3,
               borderRadius: 2,
-              transform: "translatey(50px)",
+              transform: "translateY(50px)",
               mb: "50px",
               boxShadow: "0 0 10px rgba(0,0,0,0.1)",
             }}
@@ -92,26 +86,19 @@ export default function Search() {
           </Container>
         </Box>
 
+        {/* Events list */}
         <Container maxWidth="xl" sx={{ pt: 8, pb: 10, px: { xs: 0, md: 4 } }}>
-          {hospitals.length > 0 && (
+          {events.length > 0 && (
             <Box sx={{ mb: 3 }}>
-              <Typography
-                component="h1"
-                fontSize={24}
-                lineHeight={1.1}
-                mb={2}
-                fontWeight={500}
-              >
-                {`${hospitals.length} medical centers available in `}
-                <span style={{ textTransform: "capitalize" }}>
-                  {city.toLocaleLowerCase()}
-                </span>
+              <Typography component="h1" fontSize={24} fontWeight={500} mb={2}>
+                {`${events.length} events available in `}
+                <span style={{ textTransform: "capitalize" }}>{city?.toLowerCase()}</span>
               </Typography>
+
               <Stack direction="row" spacing={2}>
-                <img src={icon} height={24} width={24} alt="icon" />
-                <Typography color="#787887" lineHeight={1.4}>
+                <img src={icon} alt="verified icon" height={24} width={24} />
+                <Typography color="#787887">
                   Book tickets with minimum wait-time & verified event details
-                  details
                 </Typography>
               </Stack>
             </Box>
@@ -119,20 +106,18 @@ export default function Search() {
 
           <Stack alignItems="flex-start" direction={{ md: "row" }}>
             <Stack
-              mb={{ xs: 4, md: 0 }}
               spacing={3}
               width={{ xs: 1, md: "calc(100% - 384px)" }}
-              mr="24px"
+              mr={{ md: "24px" }}
             >
-              {hospitals.length > 0 &&
-                hospitals.map((hospital) => (
-                  <HospitalCard
-                    key={hospital["Hospital Name"]}
-                    details={hospital}
-                    availableSlots={availableSlots}
-                    handleBooking={handleBookingModal}
-                  />
-                ))}
+              {events.map((event) => (
+                <HospitalCard
+                  key={event.eventName}
+                  details={event}
+                  availableSlots={availableSlots}
+                  handleBooking={handleBookingModal}
+                />
+              ))}
 
               {isLoading && (
                 <Typography variant="h3" bgcolor="#fff" p={3} borderRadius={2}>
@@ -140,14 +125,20 @@ export default function Search() {
                 </Typography>
               )}
 
-              {!state && (
+              {!state || !city ? (
                 <Typography variant="h3" bgcolor="#fff" p={3} borderRadius={2}>
                   Please select a state and city
+                </Typography>
+              ) : null}
+
+              {events.length === 0 && !isLoading && state && city && (
+                <Typography variant="h3" bgcolor="#fff" p={3} borderRadius={2}>
+                  No events found in {city}, {state}
                 </Typography>
               )}
             </Stack>
 
-            <img src={eventoffer2} width={360} height="auto" alt="banner" />
+            <Box component="img" src={eventoffer2} width={360} height="auto" alt="banner" />
           </Stack>
         </Container>
 
